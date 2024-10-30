@@ -5,6 +5,9 @@ MultiAgent Doc QnA uses a  team of AI agents that work together to understand do
 
 The `Document Analysis Agent` first creates comprehensive appendices of documents, the `Research Agent` evaluates question relevance against these appendices, and the `Reply Agent` generates answers using the most relevant document, by loading it in the system message as a whole.
 
+![Alt Text](assets/sample.gif)
+
+
 ### When to Use Instead of RAG
 Choose this solution when:
 - You are handling highly complicated documents that RAG struggles with
