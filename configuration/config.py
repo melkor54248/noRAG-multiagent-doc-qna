@@ -2,6 +2,10 @@ import json
 import os
 from typing import Dict, Any
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 class ConfigLoader:
     def __init__(self, config_path: str = "configuration/config.json"):
         self.config_path = config_path
