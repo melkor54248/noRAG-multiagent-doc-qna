@@ -1,9 +1,6 @@
 import streamlit as st
 from io import BytesIO
-from openai import AzureOpenAI
-from configuration.config import ConfigLoader
-from utils import count_tokens, split_text_into_chunks, extract_text_from_pdf, get_summary, process_document_chunks, select_relevant_document, get_answer
-import ui
+from utils import extract_text_from_pdf, process_document_chunks, select_relevant_document, get_answer
 
 # Page configuration
 st.set_page_config(
@@ -40,19 +37,6 @@ st.markdown("""
         }
     </style>
 """, unsafe_allow_html=True)
-
-# Initialize configuration
-if 'config' not in st.session_state:
-    st.session_state.config = ConfigLoader()
-
-# Configure OpenAI
-azure_config = st.session_state.config.get_azure_config()
-client = AzureOpenAI(
-    api_key=azure_config['api_key'],
-    api_version=azure_config['api_version'],
-    azure_endpoint=azure_config['azure_endpoint']
-)
-deployment_name = azure_config['deployment_name']
 
 # Initialize session state for documents and UI control
 if 'documents' not in st.session_state:

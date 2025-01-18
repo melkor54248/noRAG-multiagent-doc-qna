@@ -111,12 +111,25 @@ streamlit run app.py
 - Token count monitoring
 - Optimization for Azure OpenAI context limits
 
+## 📂 File Structure
+
+```
+multiagent-doc-qna/
+│
+├── app.py                # Main application logic
+├── ui.py                 # Streamlit UI code
+├── utils.py              # Utility functions
+├── configuration/        # Configuration files
+│   ├── config.json       # Configuration settings
+│   └── config.py         # Configuration loader
+├── assets/               # Static assets (e.g., images)
+├── .env.example          # Example environment variables
+├── requirements.txt      # Python dependencies
+└── README.md             # Project documentation
+```
 
 ## 🔒 Security
 
 ### Data Protection
 - No document storage
 - Session-only processing
-
-
-
