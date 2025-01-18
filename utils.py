@@ -2,11 +2,24 @@ import tiktoken
 import PyPDF2
 from io import BytesIO
 from openai import AzureOpenAI
+import openai
 import json
 from typing import List, Dict, Tuple
 import logging
 import streamlit as st
+from configuration.config import ConfigLoader
+# Initialize configuration
+if 'config' not in st.session_state:
+    st.session_state.config = ConfigLoader()
 
+# Configure OpenAI
+azure_config = st.session_state.config.get_azure_config()
+client = AzureOpenAI(
+    api_key=azure_config['api_key'],
+    api_version=azure_config['api_version'],
+    azure_endpoint=azure_config['azure_endpoint']
+)
+deployment_name = azure_config['deployment_name']
 # Initialize tokenizer
 encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
 
