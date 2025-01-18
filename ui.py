@@ -1,6 +1,7 @@
 import streamlit as st
 from io import BytesIO
-from utils import extract_text_from_pdf, process_document_chunks, select_relevant_document, get_answer
+from utils import extract_text_from_pdf, process_document_chunks
+from document_selection import select_relevant_document, get_answer
 
 # Page configuration
 st.set_page_config(

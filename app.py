@@ -2,7 +2,8 @@ import streamlit as st
 from io import BytesIO
 from openai import AzureOpenAI
 from configuration.config import ConfigLoader
-from utils import count_tokens, split_text_into_chunks, extract_text_from_pdf, get_summary, process_document_chunks, select_relevant_document, get_answer
+from utils import count_tokens, split_text_into_chunks, extract_text_from_pdf, get_summary, process_document_chunks
+from document_selection import select_relevant_document, get_answer
 import ui
 
 # Page configuration
