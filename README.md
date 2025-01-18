@@ -119,6 +119,7 @@ multiagent-doc-qna/
 ├── app.py                # Main application logic
 ├── ui.py                 # Streamlit UI code
 ├── utils.py              # Utility functions
+├── document_selection.py # Document selection and answer functions
 ├── configuration/        # Configuration files
 │   ├── config.json       # Configuration settings
 │   └── config.py         # Configuration loader
