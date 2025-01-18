@@ -118,5 +118,55 @@ streamlit run app.py
 - No document storage
 - Session-only processing
 
+## Microsoft Teams App Setup
 
+### Prerequisites
+- Microsoft Azure account
+- Microsoft Bot Framework
+- Azure OpenAI API access
+
+### Quick Start
+```bash
+# Clone repository
+git clone https://github.com/yourusername/multiagent-doc-qna.git
+cd multiagent-doc-qna
+
+# Set up virtual environment
+python -m venv venv
+source venv/bin/activate  # Unix
+.\venv\Scripts\activate   # Windows
+
+# Install dependencies
+pip install -r bot/requirements.txt
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your credentials
+
+# Run the bot
+python bot/bot.py
+```
+
+### Azure Bot Service Setup
+1. Create an Azure Bot Service resource
+2. Configure the messaging endpoint
+3. Get API credentials
+4. Configure environment variables
+
+### Microsoft Teams App Configuration
+1. Register your bot with the Bot Framework
+2. Create a Microsoft Teams app package
+3. Upload the app package to Microsoft Teams
+
+### Usage
+1. Open Microsoft Teams
+2. Add your bot to a team or chat
+3. Upload a PDF file
+4. Ask questions about the uploaded document
+
+### Understanding Results
+- **Relevance Scores**: Shows how relevant each document is to your question
+- **Token Counts**: Displays processing efficiency metrics
+- **Document Summaries**: Provides quick content overview
+- **System Status**: Shows real-time processing information
 
