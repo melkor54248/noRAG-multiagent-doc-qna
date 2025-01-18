@@ -82,6 +82,57 @@ streamlit run app.py
 3. Get API credentials
 4. Configure environment variables
 
+### Running FastAPI Server
+To run the FastAPI server, use the following command:
+```bash
+uvicorn api:app --reload
+```
+
+### API Endpoints
+The following endpoints are available in the FastAPI server:
+
+- **Token Counting**
+  - **Endpoint**: `/count_tokens/`
+  - **Method**: `POST`
+  - **Request Body**: `{"text": "Your text here"}`
+  - **Response**: `{"token_count": 123}`
+
+- **Text Chunking**
+  - **Endpoint**: `/split_text/`
+  - **Method**: `POST`
+  - **Request Body**: `{"text": "Your text here"}`
+  - **Response**: `{"chunks": ["chunk1", "chunk2"]}`
+
+- **PDF Text Extraction**
+  - **Endpoint**: `/extract_text/`
+  - **Method**: `POST`
+  - **Request Body**: PDF file upload
+  - **Response**: `{"chunks": ["chunk1", "chunk2"], "chunk_tokens": [100, 200]}`
+
+- **Document Summarization**
+  - **Endpoint**: `/summarize/`
+  - **Method**: `POST`
+  - **Request Body**: `{"text": "Your text here"}`
+  - **Response**: `{"summary": "Summary of the text"}`
+
+- **Document Chunk Processing**
+  - **Endpoint**: `/process_chunks/`
+  - **Method**: `POST`
+  - **Request Body**: `{"file_name": "document.pdf", "chunks": ["chunk1", "chunk2"], "chunk_tokens": [100, 200]}`
+  - **Response**: `{"documents": {"doc1": "text1"}, "summaries": {"doc1": "summary1"}, "token_counts": {"doc1": 100}}`
+
+- **Document Relevance Selection**
+  - **Endpoint**: `/select_relevant/`
+  - **Method**: `POST`
+  - **Request Body**: `{"question": "Your question here", "summaries": {"doc1": "summary1"}}`
+  - **Response**: `{"most_relevant": "doc1", "relevance_scores": {"doc1": 90}}`
+
+- **Question Answering**
+  - **Endpoint**: `/get_answer/`
+  - **Method**: `POST`
+  - **Request Body**: `{"question": "Your question here", "document_text": "Relevant document text"}`
+  - **Response**: `{"answer": "Answer to your question"}`
+
 
 ## 💻 Usage
 
@@ -117,6 +168,3 @@ streamlit run app.py
 ### Data Protection
 - No document storage
 - Session-only processing
-
-
-
