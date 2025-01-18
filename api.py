@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
 from typing import List, Dict, Tuple
 from utils import count_tokens, split_text_into_chunks, extract_text_from_pdf, get_summary, process_document_chunks, select_relevant_document, get_answer
+from io import BytesIO
 
 app = FastAPI()
 
