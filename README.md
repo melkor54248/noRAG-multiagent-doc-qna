@@ -168,3 +168,19 @@ The following endpoints are available in the FastAPI server:
   - **Method**: `POST`
   - **Request Body**: `{"question": "Your question here", "document_text": "Relevant document text"}`
   - **Response**: `{"answer": "Answer to your question"}`
+
+### Running Microsoft Teams Bot App
+To run the Microsoft Teams bot app, follow these steps:
+```bash
+# Install botbuilder dependencies
+pip install botbuilder-core botbuilder-schema botbuilder-integration-aiohttp
+
+# Run the bot
+python teams_bot.py
+```
+
+### Configuring the Bot in Microsoft Teams
+1. Register a bot in the Azure Bot Service.
+2. Configure the messaging endpoint to point to your bot's URL.
+3. Update the bot's app ID and password in the `.env` file.
+4. Add the bot to your Microsoft Teams app.
