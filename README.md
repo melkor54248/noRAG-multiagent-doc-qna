@@ -82,6 +82,42 @@ streamlit run app.py
 3. Get API credentials
 4. Configure environment variables
 
+## 💻 Usage
+
+### Document Upload
+1. Launch the application
+2. Click "Upload Documents"
+3. Select one or more PDF files
+4. Wait for processing completion
+
+### Asking Questions
+1. Type your question in the input field
+2. Click "Submit Question"
+3. View document relevance scores
+4. Read the generated answer
+
+### Understanding Results
+- **Relevance Scores**: Shows how relevant each document is to your question
+- **Token Counts**: Displays processing efficiency metrics
+- **Document Summaries**: Provides quick content overview
+- **System Status**: Shows real-time processing information
+
+## 🛠 Technical Details
+
+### Token Management
+- Maximum tokens per chunk: 120,000
+- Automatic chunking for large documents
+- Token count monitoring
+- Optimization for Azure OpenAI context limits
+
+
+## 🔒 Security
+
+### Data Protection
+- No document storage
+- Session-only processing
+
+
 ### Running FastAPI Server
 To run the FastAPI server, use the following command:
 ```bash
@@ -132,39 +168,3 @@ The following endpoints are available in the FastAPI server:
   - **Method**: `POST`
   - **Request Body**: `{"question": "Your question here", "document_text": "Relevant document text"}`
   - **Response**: `{"answer": "Answer to your question"}`
-
-
-## 💻 Usage
-
-### Document Upload
-1. Launch the application
-2. Click "Upload Documents"
-3. Select one or more PDF files
-4. Wait for processing completion
-
-### Asking Questions
-1. Type your question in the input field
-2. Click "Submit Question"
-3. View document relevance scores
-4. Read the generated answer
-
-### Understanding Results
-- **Relevance Scores**: Shows how relevant each document is to your question
-- **Token Counts**: Displays processing efficiency metrics
-- **Document Summaries**: Provides quick content overview
-- **System Status**: Shows real-time processing information
-
-## 🛠 Technical Details
-
-### Token Management
-- Maximum tokens per chunk: 120,000
-- Automatic chunking for large documents
-- Token count monitoring
-- Optimization for Azure OpenAI context limits
-
-
-## 🔒 Security
-
-### Data Protection
-- No document storage
-- Session-only processing
