@@ -1,0 +1,3 @@
+[submodule "mm_doc_proc"]
+	path = mm_doc_proc
+	url = https://github.com/samelhousseini/mm_doc_proc.git

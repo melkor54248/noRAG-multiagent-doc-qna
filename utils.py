@@ -1,13 +1,20 @@
 import tiktoken
-import PyPDF2
 from io import BytesIO
 from openai import AzureOpenAI
-import openai
 import json
 from typing import List, Dict, Tuple
 import logging
 import streamlit as st
+import PyPDF2
 from configuration.config import ConfigLoader
+from mm_doc_proc.multimodal_processing_pipeline.configuration_models import ProcessingPipelineConfiguration
+from mm_doc_proc.multimodal_processing_pipeline.pdf_ingestion_pipeline import PDFIngestionPipeline
+from mm_doc_proc.multimodal_processing_pipeline.data_models import DocumentContent
+from mm_doc_proc.utils.openai_data_models import (
+    MulitmodalProcessingModelInfo, 
+    TextProcessingModelnfo
+)
+
 # Initialize configuration
 if 'config' not in st.session_state:
     st.session_state.config = ConfigLoader()
@@ -20,12 +27,81 @@ client = AzureOpenAI(
     azure_endpoint=azure_config['azure_endpoint']
 )
 deployment_name = azure_config['deployment_name']
+
 # Initialize tokenizer
 encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
 
 def count_tokens(text: str) -> int:
     """Count the number of tokens in a text string."""
     return len(encoding.encode(text))
+
+def extract_text_from_pdf_gpt(pdf_file) -> Tuple[List[str], List[int]]:
+    """Extract text from a PDF file using multimodal processing pipeline."""
+    # Create pipeline configuration
+    pipeline_config = ProcessingPipelineConfiguration(
+        pdf_path=pdf_file,
+        output_directory= 'tmp/',
+        process_text=True,  # Enable text processing
+        process_images=True,  # Enable image processing
+        process_tables=True,  # Enable table processing
+        save_text_files=True,
+        generate_condensed_text=False,  # We'll handle summarization separately
+        generate_table_of_contents=False
+    )
+    
+    # Configure models using existing Azure configuration
+    pipeline_config.text_model = TextProcessingModelnfo(
+        provider="azure",
+        model_name='o1',
+        reasoning_efforts="medium",
+        endpoint=azure_config['azure_endpoint'],
+        key=azure_config['api_key'],
+        model=deployment_name,
+        api_version=azure_config['api_version']
+    )
+    
+    pipeline_config.multimodal_model = MulitmodalProcessingModelInfo(
+        provider="azure",
+        model_name='o1',
+        reasoning_efforts="medium",
+        endpoint=azure_config['azure_endpoint'],
+        key=azure_config['api_key'],
+        model=deployment_name,
+        api_version=azure_config['api_version']
+    )
+    
+    # Initialize and run pipeline
+    pipeline = PDFIngestionPipeline(pipeline_config)
+    document_content: DocumentContent = pipeline.process_pdf()
+        
+    total_tokens = count_tokens(document_content.full_text)
+    max_chunk_tokens = st.session_state.config.get_processing_config()['max_chunk_tokens']
+        
+    #     # Split into chunks if necessary
+    if total_tokens > max_chunk_tokens:
+        chunks = split_text_into_chunks(document_content.full_text)
+        chunk_tokens = [count_tokens(chunk) for chunk in chunks]
+        return chunks, chunk_tokens
+    else:
+        return [document_content.full_text], [total_tokens]
+
+def extract_text_from_pdf_pypdf2(pdf_file) -> Tuple[List[str], List[int]]:
+    """Extract text from a PDF file and return text chunks and their token counts."""
+    pdf_reader = PyPDF2.PdfReader(pdf_file)
+    full_text = ""
+    for page in pdf_reader.pages:
+        full_text += page.extract_text()
+    
+    total_tokens = count_tokens(full_text)
+    max_chunk_tokens = st.session_state.config.get_processing_config()['max_chunk_tokens']
+    
+    if total_tokens > max_chunk_tokens:
+        chunks = split_text_into_chunks(full_text)
+        chunk_tokens = [count_tokens(chunk) for chunk in chunks]
+        return chunks, chunk_tokens
+    else:
+        return [full_text], [total_tokens]
+
 
 def split_text_into_chunks(text: str, max_tokens: int = None) -> List[str]:
     """Split text into chunks of maximum token size."""
@@ -53,23 +129,6 @@ def split_text_into_chunks(text: str, max_tokens: int = None) -> List[str]:
     
     return chunks
 
-def extract_text_from_pdf(pdf_file) -> Tuple[List[str], List[int]]:
-    """Extract text from a PDF file and return text chunks and their token counts."""
-    pdf_reader = PyPDF2.PdfReader(pdf_file)
-    full_text = ""
-    for page in pdf_reader.pages:
-        full_text += page.extract_text()
-    
-    total_tokens = count_tokens(full_text)
-    max_chunk_tokens = st.session_state.config.get_processing_config()['max_chunk_tokens']
-    
-    if total_tokens > max_chunk_tokens:
-        chunks = split_text_into_chunks(full_text)
-        chunk_tokens = [count_tokens(chunk) for chunk in chunks]
-        return chunks, chunk_tokens
-    else:
-        return [full_text], [total_tokens]
-
 def get_summary(text: str) -> str:
     """Get summary of text using OpenAI."""
     config = st.session_state.config.get_agent_config('document_analysis_agent')
@@ -86,6 +145,7 @@ def get_summary(text: str) -> str:
     )
     
     return response.choices[0].message.content
+
 
 def process_document_chunks(file_name: str, chunks: List[str], chunk_tokens: List[int]) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, int]]:
     """Process multiple chunks of a document and return their data."""

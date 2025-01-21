@@ -5,10 +5,11 @@ from io import BytesIO
 from openai import AzureOpenAI
 import tiktoken
 import json
+import tempfile
 from typing import List, Dict, Tuple
 import logging
 from configuration.config import ConfigLoader
-from utils import count_tokens, split_text_into_chunks, extract_text_from_pdf, get_summary, process_document_chunks, select_relevant_document, get_answer
+from utils import count_tokens, split_text_into_chunks, extract_text_from_pdf_gpt, extract_text_from_pdf_pypdf2, get_summary, process_document_chunks, select_relevant_document, get_answer
 
 # Page configuration
 st.set_page_config(
@@ -71,7 +72,9 @@ if 'token_counts' not in st.session_state:
     st.session_state.token_counts = {}
 if 'show_answer' not in st.session_state:
     st.session_state.show_answer = False
-
+if 'extraction_method' not in st.session_state:
+    st.session_state.extraction_method = 'PyPDF2'
+    
 st.subheader("📚 Multiagent Document QnA")
 
 # Create tabs
@@ -81,11 +84,18 @@ with tab1:
     # Main UI
     col1, col2 = st.columns([3, 2])
 
-    with col1:
-        # Main content area
-        st.markdown("#### 📄 Upload Documents")
-        
-        uploaded_files = st.file_uploader(
+with col1:
+
+    # Main content area
+    st.markdown("#### 📄 Upload Documents")
+    extraction_method = st.radio(
+        "Select text extraction method: Choose between PyPDF2 (faster) or GPT (more accurate) for text/image/table extraction.",
+        options=['PyPDF2', 'GPT'],
+        horizontal=True,
+        key='extraction_method',
+        help="Choose between PyPDF2 (faster) or GPT (more accurate) for text extraction"
+    )
+    uploaded_files = st.file_uploader(
             "Upload PDF Documents",  # Changed from empty string
             type=['pdf'],
             accept_multiple_files=True,
@@ -93,107 +103,119 @@ with tab1:
             key="pdf_uploader",
             label_visibility="collapsed"  # Hides the label but maintains accessibility
         )
-
-        # Process uploaded files
-        if uploaded_files:
-            for file in uploaded_files:
-                if file.name not in st.session_state.documents:
-                    with st.spinner('🔄 Document Analysis Agent is processing document ' + file.name):
-                        try:
-                            progress_bar = st.progress(0)
-                            
-                            progress_bar.progress(25)
-                            chunks, chunk_tokens = extract_text_from_pdf(BytesIO(file.read()))
-                            
-                            progress_bar.progress(50)
-                            total_tokens = sum(chunk_tokens)
-                            
-                            if len(chunks) > 1:
-                                st.info(f"""
-                                    ℹ️ Document '{file.name}' is large ({total_tokens:,} tokens) and will be split into {len(chunks)} parts.
-                                    Each part will be processed separately for better handling.
-                                """)
-                            
-                            progress_bar.progress(75)
-                            docs, sums, tokens = process_document_chunks(file.name, chunks, chunk_tokens)
-                            
-                            st.session_state.documents.update(docs)
-                            st.session_state.summaries.update(sums)
-                            st.session_state.token_counts.update(tokens)
-                            
-                            progress_bar.progress(100)
-                            
-                            if len(chunks) > 1:
-                                st.success(f"""
-                                    ✅ Successfully processed {file.name}
-                                    \n📊 Total tokens: {total_tokens:,}
-                                    \n📑 Split into {len(chunks)} parts of {', '.join(f"{tokens:,}" for tokens in chunk_tokens)} tokens each
-                                """)
-                            else:
-                                st.success(f"""
-                                    ✅ Successfully processed {file.name}
-                                    \n📊 Token count: {total_tokens:,} tokens
-                                """)
-                            
-                            progress_bar.empty()
-                            
-                        except Exception as e:
-                            st.error(f"""
-                                ❌ Error processing {file.name}
-                                \nError: {str(e)}
-                                \nPlease try again with a different file or contact support if the issue persists.
+    # Modified file processing section
+    if uploaded_files:
+        for file in uploaded_files:
+            if file.name not in st.session_state.documents:
+                with st.spinner('🔄 Document Analysis Agent is processing document ' + file.name):
+                    
+                    try:
+                        progress_bar = st.progress(0)
+                        
+                        progress_bar.progress(25)
+                        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+                            tmp_file.write(file.getvalue())
+                            file_path = tmp_file.name
+                        
+                        # Use the selected extraction method
+                        if st.session_state.extraction_method == 'GPT':
+                            chunks, chunk_tokens = extract_text_from_pdf_gpt(file_path)
+                        else:
+                            chunks, chunk_tokens = extract_text_from_pdf_pypdf2(BytesIO(file.read()))
+                        
+                        progress_bar.progress(50)
+                        total_tokens = sum(chunk_tokens)
+                        
+                        if len(chunks) > 1:
+                            st.info(f"""
+                                ℹ️ Document '{file.name}' is large ({total_tokens:,} tokens) and will be split into {len(chunks)} parts.
+                                Each part will be processed separately for better handling.
                             """)
-                            continue
-
-        st.markdown("#### ❓ Ask Your Question")
-        question = st.text_input(
-            "Enter your question",  # Changed from empty string
-            key="question_input",
-            placeholder="Type your question here...",
-            help="Ask a question about the uploaded documents",
-            label_visibility="collapsed"  # Hides the label but maintains accessibility
-        )
+                        
+                        progress_bar.progress(75)
+                        docs, sums, tokens = process_document_chunks(file.name, chunks, chunk_tokens)
+                        
+                        st.session_state.documents.update(docs)
+                        st.session_state.summaries.update(sums)
+                        st.session_state.token_counts.update(tokens)
+                        
+                        progress_bar.progress(100)
+                        
+                        # Add extraction method info to success message
+                        extraction_info = "🔍 Extracted using: " + st.session_state.extraction_method
+                        if len(chunks) > 1:
+                            st.success(f"""
+                                ✅ Successfully processed {file.name}
+                                \n{extraction_info}
+                                \n📊 Total tokens: {total_tokens:,}
+                                \n📑 Split into {len(chunks)} parts of {', '.join(f"{tokens:,}" for tokens in chunk_tokens)} tokens each
+                            """)
+                        else:
+                            st.success(f"""
+                                ✅ Successfully processed {file.name}
+                                \n{extraction_info}
+                                \n📊 Token count: {total_tokens:,} tokens
+                            """)
+                        
+                        progress_bar.empty()
+                        
+                    except Exception as e:
+                        st.error(f"""
+                            ❌ Error processing {file.name}
+                            \nError: {str(e)}
+                            \nPlease try again with a different file or contact support if the issue persists.
+                        """)
+                        continue
         
-        if st.button("🔍 Submit Question", type="primary"):
-            st.session_state.show_answer = True
-        else:
-            st.session_state.show_answer = False
+    st.markdown("#### ❓ Ask Your Question")
+    question = st.text_input(
+        "Enter your question",  # Changed from empty string
+        key="question_input",
+        placeholder="Type your question here...",
+        help="Ask a question about the uploaded documents",
+        label_visibility="collapsed"  # Hides the label but maintains accessibility
+    )
+    
+    if st.button("🔍 Submit Question", type="primary"):
+        st.session_state.show_answer = True
+    else:
+        st.session_state.show_answer = False
 
-        if st.session_state.show_answer and question and st.session_state.documents:
-            with st.spinner('🔍 Researcher Agent is analyzing document relevance...'):
-                relevant_doc, relevance_scores = select_relevant_document(question, st.session_state.summaries)
-                
-                st.markdown("#### 📊 Document Relevance")
-                
-                sorted_scores = dict(sorted(relevance_scores.items(), key=lambda x: x[1], reverse=True))
-                
-                with st.expander("View Relevance Scores"):
-                    for doc, score in sorted_scores.items():
-                        col_0, col_1, col_2 = st.columns([3, 2, 0.5])
-                        with col_0:
-                            st.markdown(f"{doc}")
-                        with col_1:
-                            st.progress(score / 100)
-                        with col_2:
-                            st.markdown(f"{score}%")
+    if st.session_state.show_answer and question and st.session_state.documents:
+        with st.spinner('🔍 Researcher Agent is analyzing document relevance...'):
+            relevant_doc, relevance_scores = select_relevant_document(question, st.session_state.summaries)
+            
+            st.markdown("#### 📊 Document Relevance")
+            
+            sorted_scores = dict(sorted(relevance_scores.items(), key=lambda x: x[1], reverse=True))
+            
+            with st.expander("View Relevance Scores"):
+                for doc, score in sorted_scores.items():
+                    col_0, col_1, col_2 = st.columns([3, 2, 0.5])
+                    with col_0:
+                        st.markdown(f"{doc}")
+                    with col_1:
+                        st.progress(score / 100)
+                    with col_2:
+                        st.markdown(f"{score}%")
 
-            with st.spinner('🔍 Reply Agent is generating an answer from the most relevant document...'):
-                answer = get_answer(question, st.session_state.documents[relevant_doc])
-                
-                st.markdown("#### 💡 Answer")
-                st.info(f"""
-                    📄 Source: {relevant_doc}
-                    \n📊 Document size: {st.session_state.token_counts[relevant_doc]:,} tokens
-                    \n🎯 Relevance score: {relevance_scores[relevant_doc]}%
-                """)
-                st.markdown(
-                    f"""
-                    <div style="background-color: #f0f2f6; padding: 20px; border-radius: 10px; margin: 10px 0;">
-                        {answer}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+        with st.spinner('🔍 Reply Agent is generating an answer from the most relevant document...'):
+            answer = get_answer(question, st.session_state.documents[relevant_doc])
+            
+            st.markdown("#### 💡 Answer")
+            st.info(f"""
+                📄 Source: {relevant_doc}
+                \n📊 Document size: {st.session_state.token_counts[relevant_doc]:,} tokens
+                \n🎯 Relevance score: {relevance_scores[relevant_doc]}%
+            """)
+            st.markdown(
+                f"""
+                <div style="background-color: #f0f2f6; padding: 20px; border-radius: 10px; margin: 10px 0;">
+                    {answer}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
     with col2:
         st.markdown("#### 📑 Documents Processed")
@@ -203,7 +225,7 @@ with tab1:
             st.markdown(f"📊 Total tokens across all documents: **{total_tokens:,}**")
             
             for filename in st.session_state.summaries.keys():
-                with st.expander(f"📄 {filename}"):
+                with st.expander(f"📄 {filename} - APPENDIX"):
                     # Make summary editable with automatic saving
                     edited_summary = st.text_area(
                         "Document Appendix",
@@ -225,6 +247,9 @@ with tab1:
                         """,
                         unsafe_allow_html=True
                     )
+            for filename in st.session_state.documents.keys():
+                with st.expander(f"📄 {filename} - FULL DOCUMENT"):
+                    st.markdown(st.session_state.documents[filename])
                     
 
         else:
