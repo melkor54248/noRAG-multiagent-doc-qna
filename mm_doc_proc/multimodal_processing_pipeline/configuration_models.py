@@ -3,15 +3,14 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Literal, Type, Union
 
 
-from data_models import *
-
+from mm_doc_proc.multimodal_processing_pipeline.data_models import *
 
 class ProcessingPipelineConfiguration(BaseModel):
     """
     Configuration settings for the processing pipeline.
     """
     pdf_path: str
-    output_directory: Optional[str] = None
+    output_directory: Optional[str] = str
     multimodal_model: MulitmodalProcessingModelInfo = MulitmodalProcessingModelInfo()
     text_model: TextProcessingModelnfo = TextProcessingModelnfo()
     process_pages_as_jpg: bool = True

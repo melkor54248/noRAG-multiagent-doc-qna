@@ -1,18 +1,17 @@
 import os
 import base64
-import json
 from PIL import Image
-from utils.file_utils import write_to_file, replace_extension, read_asset_file, locate_prompt
-from utils.text_utils import clean_up_text, extract_markdown, extract_code
-from utils.openai_utils import call_llm, call_llm_structured_outputs
-from data_models import EmbeddedText, EmbeddedImages, EmbeddedTables
+from mm_doc_proc.utils.file_utils import write_to_file, replace_extension, read_asset_file, locate_prompt
+from mm_doc_proc.utils.text_utils import clean_up_text, extract_markdown, extract_code
+from mm_doc_proc.utils.openai_utils import call_llm, call_llm_structured_outputs
+from mm_doc_proc.multimodal_processing_pipeline.data_models import EmbeddedImages, EmbeddedTables
 
 
 module_directory = os.path.dirname(os.path.abspath(__file__))
 
 
 
-def locate_ingestion_prompt(prompt_name, module_directory=module_directory):
+def locate_ingestion_prompt(prompt_name, module_directory):
     return locate_prompt(prompt_name, module_directory)
 
 
@@ -54,7 +53,7 @@ def analyze_images(image_path, model_info=None):
         str: Analysis response.
         str: Generated text filename.
     """
-    prompt_path = locate_ingestion_prompt('image_description_prompt.txt')
+    prompt_path = locate_ingestion_prompt('image_description_prompt.txt',os.path.dirname(os.path.abspath(__file__)))
     image_prompt = read_asset_file(prompt_path)[0]
     image_path = convert_png_to_jpg(image_path)  # Ensure the image is in JPG format
 
@@ -80,7 +79,7 @@ def analyze_tables(image_path, model_info=None):
         str: Table analysis response.
         str: Generated Markdown filename.
     """
-    prompt_path = locate_ingestion_prompt('table_description_prompt.txt')
+    prompt_path = locate_ingestion_prompt('table_description_prompt.txt', os.path.dirname(os.path.abspath(__file__)))
     table_prompt = read_asset_file(prompt_path)[0]
     image_path = convert_png_to_jpg(image_path)  # Ensure the image is in JPG format
 
@@ -94,7 +93,7 @@ def analyze_tables(image_path, model_info=None):
     return response
 
 
-def process_text(text, page_image_path, model_info=None):
+def process_text(text, model_info=None):
     """
     Processes text using a language model.
 
@@ -106,25 +105,17 @@ def process_text(text, page_image_path, model_info=None):
         str: Processed text.
     """
 
-    prompt_path = locate_ingestion_prompt('process_extracted_text_prompt.txt')
+    prompt_path = locate_ingestion_prompt('process_extracted_text_prompt.txt',os.path.dirname(os.path.abspath(__file__)))
     process_text_prompt = read_asset_file(prompt_path)[0]
 
     prompt = process_text_prompt.format(text=text)
 
-    if model_info.model_name == "o1-mini":
-        response = call_llm(
-            prompt,
-            model_info=model_info
-        )
-        return response
-    else:
-        response = call_llm(
-            prompt=prompt,
-            model_info=model_info,
-            imgs = [page_image_path],
-        )
+    response = call_llm(
+        prompt,
+        model_info=model_info
+    )
 
-        return response
+    return response
 
 
 def condense_text(text, model_info=None):

@@ -177,10 +177,9 @@ sample_data_1/
 test1.ipynb
 test.ipynb
 test*.ipynb
-.files/
+
 .chainlit/
 processed/
 env_vars.py
 
 old_*.py
-downloaded_files/

@@ -73,17 +73,17 @@ def extract_text_from_pdf_gpt(pdf_file) -> Tuple[List[str], List[int]]:
     # Initialize and run pipeline
     pipeline = PDFIngestionPipeline(pipeline_config)
     document_content: DocumentContent = pipeline.process_pdf()
-        
-    total_tokens = count_tokens(document_content.full_text)
+    document_text = document_content.full_text
+    total_tokens = count_tokens(document_text)
     max_chunk_tokens = st.session_state.config.get_processing_config()['max_chunk_tokens']
         
     #     # Split into chunks if necessary
     if total_tokens > max_chunk_tokens:
-        chunks = split_text_into_chunks(document_content.full_text)
+        chunks = split_text_into_chunks(document_text)
         chunk_tokens = [count_tokens(chunk) for chunk in chunks]
         return chunks, chunk_tokens
     else:
-        return [document_content.full_text], [total_tokens]
+        return [document_text], [total_tokens]
 
 def extract_text_from_pdf_pypdf2(pdf_file) -> Tuple[List[str], List[int]]:
     """Extract text from a PDF file and return text chunks and their token counts."""

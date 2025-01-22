@@ -14,21 +14,23 @@ AZURE_OPENAI_API_VERSION = os.getenv('AZURE_OPENAI_API_VERSION')
 
 
 def get_azure_endpoint(resource):
+    print('the resource is', resource)
+    print(resource)
     return f"https://{resource}.openai.azure.com" if not "https://" in resource else resource
 
 
 
 azure_gpt_4o_model_info = {
-    "RESOURCE": os.getenv('AZURE_OPENAI_RESOURCE_4O'),
-    "KEY": os.getenv('AZURE_OPENAI_KEY_4O'),
-    "MODEL": os.getenv('AZURE_OPENAI_MODEL_4O'),
+    "RESOURCE": os.getenv('OPENAI_ENDPOINT'),
+    "KEY": os.getenv('OPENAI_API_KEY'),
+    "MODEL": os.getenv('OPENAI_DEPLOYMENT_NAME'),
     "API_VERSION": AZURE_OPENAI_API_VERSION
 }
 
 azure_o1_model_info = {
-    "RESOURCE": os.getenv('AZURE_OPENAI_RESOURCE_O1'),
-    "KEY": os.getenv('AZURE_OPENAI_KEY_O1'),
-    "MODEL": os.getenv('AZURE_OPENAI_MODEL_O1'),
+    "RESOURCE": os.getenv('O1_OPENAI_ENDPOINT'),
+    "KEY": os.getenv('O1_OPENAI_API_KEY'),
+    "MODEL": os.getenv('O1_OPENAI_DEPLOYMENT_NAME'),
     "API_VERSION": AZURE_OPENAI_API_VERSION
 }
 

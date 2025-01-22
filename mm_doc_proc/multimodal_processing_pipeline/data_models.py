@@ -2,18 +2,11 @@ from pydantic import BaseModel
 from typing import Optional, List, Literal
 from pathlib import Path
 
-from utils.openai_data_models import *
+from mm_doc_proc.utils.openai_data_models import *
 
 ###############################################################################
 # Working data models - used in LLM Structured Outputs calls
 ###############################################################################
-
-class EmbeddedText(BaseModel):
-    """
-    Used in LLM call structured output for text analysis.
-    """
-    processed_text: str
-    
 
 
 class EmbeddedImage(BaseModel):
